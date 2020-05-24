@@ -65,7 +65,7 @@
 
 set -euo pipefail
 
-sh_ver="1.22.0"
+sh_ver="1.23.0"
 sh_debug=0
 SH_LINK="https://raw.githubusercontent.com/woniuzfb/iptv/master/iptv.sh"
 SH_LINK_BACKUP="http://hbo.epub.fun/iptv.sh"
@@ -628,7 +628,9 @@ Install()
         InstallJq
 
         default=$(
-        $JQ_FILE -n --arg proxy '' --arg playlist_name '' --arg seg_dir_name '' \
+        $JQ_FILE -n --arg proxy '' --arg user_agent 'Mozilla/5.0 (QtEmbedded; U; Linux; C)' \
+            --arg headers '' --arg cookies 'stb_lang=en; timezone=Europe/Amsterdam' \
+            --arg playlist_name '' --arg seg_dir_name '' \
             --arg seg_name '' --arg seg_length 6 \
             --arg seg_count 5 --arg video_codec "libx264" \
             --arg audio_codec "aac" --arg video_audio_shift '' \
@@ -652,6 +654,9 @@ Install()
             --arg recheck_period 0 --arg version "$sh_ver" \
             '{
                 proxy: $proxy,
+                user_agent: $user_agent,
+                headers: $headers,
+                cookies: $cookies,
                 playlist_name: $playlist_name,
                 seg_dir_name: $seg_dir_name,
                 seg_name: $seg_name,
@@ -862,8 +867,17 @@ GetDefault()
     while IFS= read -r d
     do
         d_proxy=${d#*proxy: }
-        d_proxy=${d_proxy%, playlist_name:*}
+        d_proxy=${d_proxy%, user_agent:*}
         [ "$d_proxy" == null ] && d_proxy=""
+        d_user_agent=${d#*, user_agent: }
+        d_user_agent=${d_user_agent%, headers:*}
+        [ "$d_user_agent" == null ] && d_user_agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)"
+        d_headers=${d#*, headers: }
+        d_headers=${d_headers%, cookies:*}
+        [ "$d_headers" == null ] && d_headers=""
+        d_cookies=${d#*, cookies: }
+        d_cookies=${d_cookies%, playlist_name:*}
+        [ "$d_cookies" == null ] && d_cookies="stb_lang=en; timezone=Europe/Amsterdam"
         d_playlist_name=${d#*, playlist_name: }
         d_playlist_name=${d_playlist_name%, seg_dir_name:*}
         d_playlist_name_text=${d_playlist_name:-随机名称}
@@ -1061,7 +1075,7 @@ GetDefault()
         fi
         d_version=${d#*, version: }
         d_version=${d_version%\"}
-    done < <($JQ_FILE 'to_entries | map(select(.key=="default")) | map("proxy: \(.value.proxy), playlist_name: \(.value.playlist_name), seg_dir_name: \(.value.seg_dir_name), seg_name: \(.value.seg_name), seg_length: \(.value.seg_length), seg_count: \(.value.seg_count), video_codec: \(.value.video_codec), audio_codec: \(.value.audio_codec), video_audio_shift: \(.value.video_audio_shift), quality: \(.value.quality), bitrates: \(.value.bitrates), const: \(.value.const), encrypt: \(.value.encrypt), encrypt_session: \(.value.encrypt_session), keyinfo_name: \(.value.keyinfo_name), key_name: \(.value.key_name), input_flags: \(.value.input_flags), output_flags: \(.value.output_flags), sync: \(.value.sync), sync_file: \(.value.sync_file), sync_index: \(.value.sync_index), sync_pairs: \(.value.sync_pairs), schedule_file: \(.value.schedule_file), flv_delay_seconds: \(.value.flv_delay_seconds), flv_restart_nums: \(.value.flv_restart_nums), hls_delay_seconds: \(.value.hls_delay_seconds), hls_min_bitrates: \(.value.hls_min_bitrates), hls_max_seg_size: \(.value.hls_max_seg_size), hls_restart_nums: \(.value.hls_restart_nums), hls_key_period: \(.value.hls_key_period), anti_ddos_port: \(.value.anti_ddos_port), anti_ddos_syn_flood: \(.value.anti_ddos_syn_flood), anti_ddos_syn_flood_delay_seconds: \(.value.anti_ddos_syn_flood_delay_seconds), anti_ddos_syn_flood_seconds: \(.value.anti_ddos_syn_flood_seconds), anti_ddos: \(.value.anti_ddos), anti_ddos_seconds: \(.value.anti_ddos_seconds), anti_ddos_level: \(.value.anti_ddos_level), anti_leech: \(.value.anti_leech), anti_leech_restart_nums: \(.value.anti_leech_restart_nums), anti_leech_restart_flv_changes: \(.value.anti_leech_restart_flv_changes), anti_leech_restart_hls_changes: \(.value.anti_leech_restart_hls_changes), recheck_period: \(.value.recheck_period), version: \(.value.version)") | .[]' "$CHANNELS_FILE")
+    done < <($JQ_FILE 'to_entries | map(select(.key=="default")) | map("proxy: \(.value.proxy), user_agent: \(.value.user_agent), headers: \(.value.headers), cookies: \(.value.cookies), playlist_name: \(.value.playlist_name), seg_dir_name: \(.value.seg_dir_name), seg_name: \(.value.seg_name), seg_length: \(.value.seg_length), seg_count: \(.value.seg_count), video_codec: \(.value.video_codec), audio_codec: \(.value.audio_codec), video_audio_shift: \(.value.video_audio_shift), quality: \(.value.quality), bitrates: \(.value.bitrates), const: \(.value.const), encrypt: \(.value.encrypt), encrypt_session: \(.value.encrypt_session), keyinfo_name: \(.value.keyinfo_name), key_name: \(.value.key_name), input_flags: \(.value.input_flags), output_flags: \(.value.output_flags), sync: \(.value.sync), sync_file: \(.value.sync_file), sync_index: \(.value.sync_index), sync_pairs: \(.value.sync_pairs), schedule_file: \(.value.schedule_file), flv_delay_seconds: \(.value.flv_delay_seconds), flv_restart_nums: \(.value.flv_restart_nums), hls_delay_seconds: \(.value.hls_delay_seconds), hls_min_bitrates: \(.value.hls_min_bitrates), hls_max_seg_size: \(.value.hls_max_seg_size), hls_restart_nums: \(.value.hls_restart_nums), hls_key_period: \(.value.hls_key_period), anti_ddos_port: \(.value.anti_ddos_port), anti_ddos_syn_flood: \(.value.anti_ddos_syn_flood), anti_ddos_syn_flood_delay_seconds: \(.value.anti_ddos_syn_flood_delay_seconds), anti_ddos_syn_flood_seconds: \(.value.anti_ddos_syn_flood_seconds), anti_ddos: \(.value.anti_ddos), anti_ddos_seconds: \(.value.anti_ddos_seconds), anti_ddos_level: \(.value.anti_ddos_level), anti_leech: \(.value.anti_leech), anti_leech_restart_nums: \(.value.anti_leech_restart_nums), anti_leech_restart_flv_changes: \(.value.anti_leech_restart_flv_changes), anti_leech_restart_hls_changes: \(.value.anti_leech_restart_hls_changes), recheck_period: \(.value.recheck_period), version: \(.value.version)") | .[]' "$CHANNELS_FILE")
     #done < <($JQ_FILE '.default | to_entries | map([.key,.value]|join(": ")) | join(", ")' "$CHANNELS_FILE")
 }
 
@@ -1076,6 +1090,9 @@ GetChannelsInfo()
     chnls_stream_links=()
     chnls_live=()
     chnls_proxy=()
+    chnls_user_agent=()
+    chnls_headers=()
+    chnls_cookies=()
     chnls_output_dir_name=()
     chnls_playlist_name=()
     chnls_seg_dir_name=()
@@ -1119,8 +1136,17 @@ GetChannelsInfo()
         map_live=${map_live%, proxy:*}
         [ "$map_live" == null ] && map_live="yes"
         map_proxy=${channel#*, proxy: }
-        map_proxy=${map_proxy%, output_dir_name:*}
+        map_proxy=${map_proxy%, user_agent:*}
         [ "$map_proxy" == null ] && map_proxy=""
+        map_user_agent=${channel#*, user_agent: }
+        map_user_agent=${map_user_agent%, headers:*}
+        [ "$map_user_agent" == null ] && map_user_agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)"
+        map_headers=${channel#*, headers: }
+        map_headers=${map_headers%, cookies:*}
+        [ "$map_headers" == null ] && map_headers=""
+        map_cookies=${channel#*, cookies: }
+        map_cookies=${map_cookies%, output_dir_name:*}
+        [ "$map_cookies" == null ] && map_cookies="stb_lang=en; timezone=Europe/Amsterdam"
         map_output_dir_name=${channel#*, output_dir_name: }
         map_output_dir_name=${map_output_dir_name%, playlist_name:*}
         map_playlist_name=${channel#*, playlist_name: }
@@ -1204,6 +1230,9 @@ GetChannelsInfo()
         chnls_stream_links+=("$map_stream_link")
         chnls_live+=("$map_live")
         chnls_proxy+=("$map_proxy")
+        chnls_user_agent+=("$map_user_agent")
+        chnls_headers+=("$map_headers")
+        chnls_cookies+=("$map_cookies")
         chnls_output_dir_name+=("$map_output_dir_name")
         chnls_playlist_name+=("$map_playlist_name")
         chnls_seg_dir_name+=("$map_seg_dir_name")
@@ -1232,7 +1261,7 @@ GetChannelsInfo()
         chnls_flv_status+=("$map_flv_status")
         chnls_flv_push_link+=("$map_flv_push_link")
         chnls_flv_pull_link+=("$map_flv_pull_link")
-    done < <($JQ_FILE '.channels | to_entries | map("pid: \(.value.pid), status: \(.value.status), stream_link: \(.value.stream_link), live: \(.value.live), proxy: \(.value.proxy), output_dir_name: \(.value.output_dir_name), playlist_name: \(.value.playlist_name), seg_dir_name: \(.value.seg_dir_name), seg_name: \(.value.seg_name), seg_length: \(.value.seg_length), seg_count: \(.value.seg_count), video_codec: \(.value.video_codec), audio_codec: \(.value.audio_codec), video_audio_shift: \(.value.video_audio_shift), quality: \(.value.quality), bitrates: \(.value.bitrates), const: \(.value.const), encrypt: \(.value.encrypt), encrypt_session: \(.value.encrypt_session), keyinfo_name: \(.value.keyinfo_name), key_name: \(.value.key_name), key_time: \(.value.key_time), input_flags: \(.value.input_flags), output_flags: \(.value.output_flags), channel_name: \(.value.channel_name), channel_time: \(.value.channel_time), sync: \(.value.sync), sync_file: \(.value.sync_file), sync_index: \(.value.sync_index), sync_pairs: \(.value.sync_pairs), flv_status: \(.value.flv_status), flv_push_link: \(.value.flv_push_link), flv_pull_link: \(.value.flv_pull_link)") | .[]' "$CHANNELS_FILE")
+    done < <($JQ_FILE '.channels | to_entries | map("pid: \(.value.pid), status: \(.value.status), stream_link: \(.value.stream_link), live: \(.value.live), proxy: \(.value.proxy), user_agent: \(.value.user_agent), headers: \(.value.headers), cookies: \(.value.cookies), output_dir_name: \(.value.output_dir_name), playlist_name: \(.value.playlist_name), seg_dir_name: \(.value.seg_dir_name), seg_name: \(.value.seg_name), seg_length: \(.value.seg_length), seg_count: \(.value.seg_count), video_codec: \(.value.video_codec), audio_codec: \(.value.audio_codec), video_audio_shift: \(.value.video_audio_shift), quality: \(.value.quality), bitrates: \(.value.bitrates), const: \(.value.const), encrypt: \(.value.encrypt), encrypt_session: \(.value.encrypt_session), keyinfo_name: \(.value.keyinfo_name), key_name: \(.value.key_name), key_time: \(.value.key_time), input_flags: \(.value.input_flags), output_flags: \(.value.output_flags), channel_name: \(.value.channel_name), channel_time: \(.value.channel_time), sync: \(.value.sync), sync_file: \(.value.sync_file), sync_index: \(.value.sync_index), sync_pairs: \(.value.sync_pairs), flv_status: \(.value.flv_status), flv_push_link: \(.value.flv_push_link), flv_pull_link: \(.value.flv_pull_link)") | .[]' "$CHANNELS_FILE")
 
     return 0
 }
@@ -1396,13 +1425,24 @@ GetChannelInfo()
             chnl_live_text="$green是$plain"
         fi
         chnl_proxy=${channel#*, proxy: }
-        chnl_proxy=${chnl_proxy%, output_dir_name:*}
+        chnl_proxy=${chnl_proxy%, user_agent:*}
         if [ "${chnl_stream_link:0:4}" == "http" ] && [ -n "$chnl_proxy" ]
         then
             chnl_proxy_command="-http_proxy $chnl_proxy"
         else
+            chnl_proxy=""
             chnl_proxy_command=""
         fi
+        chnl_user_agent=${channel#*, user_agent: }
+        chnl_user_agent=${chnl_user_agent%, headers:*}
+        chnl_headers=${channel#*, headers: }
+        chnl_headers=${chnl_headers%, cookies:*}
+        if [ -n "$chnl_headers" ] && [[ ! $chnl_headers == *"\r\n" ]] && [[ $chnl_headers == *"\r\n"* ]]
+        then
+            chnl_headers="$chnl_headers\r\n"
+        fi
+        chnl_cookies=${channel#*, cookies: }
+        chnl_cookies=${chnl_cookies%, output_dir_name:*}
         chnl_output_dir_name=${channel#*, output_dir_name: }
         chnl_output_dir_name=${chnl_output_dir_name%, playlist_name:*}
         chnl_output_dir_root="$LIVE_ROOT/$chnl_output_dir_name"
@@ -1416,6 +1456,12 @@ GetChannelInfo()
         chnl_seg_length=${chnl_seg_length%, seg_count:*}
         chnl_seg_count=${channel#*, seg_count: }
         chnl_seg_count=${chnl_seg_count%, video_codec:*}
+        if [ -n "$chnl_live" ]
+        then
+            chnl_seg_count_command="-c $chnl_seg_count"
+        else
+            chnl_seg_count_command=""
+        fi
         chnl_video_codec=${channel#*, video_codec: }
         chnl_video_codec=${chnl_video_codec%, audio_codec:*}
         chnl_audio_codec=${channel#*, audio_codec: }
@@ -1468,6 +1514,12 @@ GetChannelInfo()
         chnl_keyinfo_name=${chnl_keyinfo_name%, key_name:*}
         chnl_key_name=${channel#*, key_name: }
         chnl_key_name=${chnl_key_name%, key_time:*}
+        if [ -n "$chnl_encrypt" ] 
+        then
+            chnl_key_name_command="-K $chnl_key_name"
+        else
+            chnl_key_name_command=""
+        fi
         chnl_key_time=${channel#*, key_time: }
         chnl_key_time=${chnl_key_time%, input_flags:*}
         chnl_input_flags=${channel#*, input_flags: }
@@ -1480,12 +1532,6 @@ GetChannelInfo()
         chnl_channel_time=${chnl_channel_time%, sync:*}
         chnl_sync_yn=${channel#*, sync: }
         chnl_sync_yn=${chnl_sync_yn%, sync_file:*}
-        if [ "$chnl_sync_yn" == "no" ]
-        then
-            chnl_sync_text="$red禁用$plain"
-        else
-            chnl_sync_text="$green启用$plain"
-        fi
         chnl_sync_file=${channel#*, sync_file: }
         chnl_sync_file=${chnl_sync_file%, sync_index:*}
         chnl_sync_index=${channel#*, sync_index: }
@@ -1501,6 +1547,12 @@ GetChannelInfo()
 
         if [ -z "${monitor:-}" ] 
         then
+            if [ "$chnl_sync_yn" == "no" ]
+            then
+                chnl_sync_text="$red禁用$plain"
+            else
+                chnl_sync_text="$green启用$plain"
+            fi
             if [ "$chnl_status" == "on" ]
             then
                 chnl_status_text=$green"开启"$plain
@@ -1592,9 +1644,9 @@ GetChannelInfo()
                 chnl_playlist_link_text=${chnl_playlist_link_text//_master.m3u8/.m3u8}
             fi
         fi
-    done < <($JQ_FILE '.channels | to_entries | map(select('"$select"')) | map("pid: \(.value.pid), status: \(.value.status), stream_link: \(.value.stream_link), live: \(.value.live), proxy: \(.value.proxy), output_dir_name: \(.value.output_dir_name), playlist_name: \(.value.playlist_name), seg_dir_name: \(.value.seg_dir_name), seg_name: \(.value.seg_name), seg_length: \(.value.seg_length), seg_count: \(.value.seg_count), video_codec: \(.value.video_codec), audio_codec: \(.value.audio_codec), video_audio_shift: \(.value.video_audio_shift), quality: \(.value.quality), bitrates: \(.value.bitrates), const: \(.value.const), encrypt: \(.value.encrypt), encrypt_session: \(.value.encrypt_session), keyinfo_name: \(.value.keyinfo_name), key_name: \(.value.key_name), key_time: \(.value.key_time), input_flags: \(.value.input_flags), output_flags: \(.value.output_flags), channel_name: \(.value.channel_name), channel_time: \(.value.channel_time), sync: \(.value.sync), sync_file: \(.value.sync_file), sync_index: \(.value.sync_index), sync_pairs: \(.value.sync_pairs), flv_status: \(.value.flv_status), flv_push_link: \(.value.flv_push_link), flv_pull_link: \(.value.flv_pull_link)") | .[]' "$CHANNELS_FILE")
+    done < <($JQ_FILE '.channels | to_entries | map(select('"$select"')) | map("pid: \(.value.pid), status: \(.value.status), stream_link: \(.value.stream_link), live: \(.value.live), proxy: \(.value.proxy), user_agent: \(.value.user_agent), headers: \(.value.headers), cookies: \(.value.cookies), output_dir_name: \(.value.output_dir_name), playlist_name: \(.value.playlist_name), seg_dir_name: \(.value.seg_dir_name), seg_name: \(.value.seg_name), seg_length: \(.value.seg_length), seg_count: \(.value.seg_count), video_codec: \(.value.video_codec), audio_codec: \(.value.audio_codec), video_audio_shift: \(.value.video_audio_shift), quality: \(.value.quality), bitrates: \(.value.bitrates), const: \(.value.const), encrypt: \(.value.encrypt), encrypt_session: \(.value.encrypt_session), keyinfo_name: \(.value.keyinfo_name), key_name: \(.value.key_name), key_time: \(.value.key_time), input_flags: \(.value.input_flags), output_flags: \(.value.output_flags), channel_name: \(.value.channel_name), channel_time: \(.value.channel_time), sync: \(.value.sync), sync_file: \(.value.sync_file), sync_index: \(.value.sync_index), sync_pairs: \(.value.sync_pairs), flv_status: \(.value.flv_status), flv_push_link: \(.value.flv_push_link), flv_pull_link: \(.value.flv_pull_link)") | .[]' "$CHANNELS_FILE")
 
-    if [ "$chn_found" -eq 0 ]
+    if [ "$chn_found" -eq 0 ] && [ -z "${monitor:-}" ]
     then
         Println "$error 频道发生变化，请重试 !\n" && exit 1
     fi
@@ -1639,6 +1691,13 @@ GetChannelInfoLite()
         else
             chnl_proxy_command=""
         fi
+        chnl_user_agent=${chnls_user_agent[i]}
+        chnl_headers=${chnls_headers[i]}
+        if [ -n "$chnl_headers" ] && [[ ! $chnl_headers == *"\r\n" ]] && [[ $chnl_headers == *"\r\n"* ]]
+        then
+            chnl_headers="$chnl_headers\r\n"
+        fi
+        chnl_cookies=${chnls_cookies[i]}
         chnl_output_dir_name=${chnls_output_dir_name[i]}
         chnl_output_dir_root="$LIVE_ROOT/$chnl_output_dir_name"
         chnl_playlist_name=${chnls_playlist_name[i]}
@@ -1836,6 +1895,9 @@ ViewChannelInfo()
     printf "%s\r\e[20C$green%s$plain\n" " 直播源" "${chnl_stream_links// /, }"
     printf '%b' " 无限时长直播\r\e[20C$chnl_live_text\n"
     printf "%s\r\e[20C$green%s$plain\n" " 代理" "${chnl_proxy:-无}"
+    printf "%s\r\e[20C$green%s$plain\n" " user agent" "${chnl_user_agent:-无}"
+    printf "%s\r\e[20C$green%s$plain\n" " headers" "${chnl_headers:-无}"
+    printf "%s\r\e[20C$green%s$plain\n" " cookies" "${chnl_cookies:-无}"
     printf "%s\r\e[20C$green%s$plain\n" " 视频编码" "$chnl_video_codec"
     printf "%s\r\e[20C$green%s$plain\n" " 音频编码" "$chnl_audio_codec"
     printf '%b' " 视频质量\r\e[20C$chnl_video_quality_text\n"
@@ -1999,7 +2061,7 @@ SetStreamLink()
         for((i=0;i<${#stream_links[@]};i++));
         do
             link="${stream_links[i]}"
-            if { [[ $link == *"https://www.youtube.com"* ]] || [[ $link == *"https://youtube.com"* ]]; } && [[ $link != *".m3u8"* ]] && [[ $link != *"|"* ]]
+            if { [ "${link:0:23}" == "https://www.youtube.com" ] || [ "${link:0:19}" == "https://youtube.com" ]; } && [[ $link != *".m3u8"* ]] && [[ $link != *"|"* ]]
             then
                 Println "$info 查询 $green$link$plain 视频信息..."
 
@@ -2181,6 +2243,49 @@ SetProxy()
         proxy=""
     fi
     Println "	ffmpeg 代理: $green ${proxy:-不设置} $plain\n"
+}
+
+SetUserAgent()
+{
+    Println "请输入 ffmpeg 的 user agent"
+    echo -e "$tip 可以输入 omit 省略此选项\n"
+    read -p "(默认: ${d_user_agent:-不设置}): " user_agent
+    user_agent=${user_agent:-$d_user_agent}
+    if [ "$user_agent" == "omit" ] 
+    then
+        user_agent=""
+    fi
+    Println "	ffmpeg UA: $green ${user_agent:-不设置} $plain\n"
+}
+
+SetHeaders()
+{
+    Println "请输入 ffmpeg headers"
+    echo -e "$tip 多个 header 用 \r\n 分隔, 可以输入 omit 省略此选项\n"
+    read -p "(默认: ${d_headers:-不设置}): " headers
+    headers=${headers:-$d_headers}
+    if [ "$headers" == "omit" ] 
+    then
+        headers=""
+    fi
+    if [ -n "$headers" ] && [[ ! $headers == *"\r\n" ]] && [[ $headers == *"\r\n"* ]]
+    then
+        headers="$headers\r\n"
+    fi
+    Println "	ffmpeg headers: $green ${headers:-不设置} $plain\n"
+}
+
+SetCookies()
+{
+    Println "请输入 ffmpeg cookies"
+    echo -e "$tip 多个 cookies 用 ; 分隔, 可以输入 omit 省略此选项\n"
+    read -p "(默认: ${d_cookies:-不设置}): " cookies
+    cookies=${cookies:-$d_cookies}
+    if [ "$cookies" == "omit" ] 
+    then
+        cookies=""
+    fi
+    Println "	ffmpeg cookies: $green ${cookies:-不设置} $plain\n"
 }
 
 SetOutputDirName()
@@ -2902,7 +3007,7 @@ FlvStreamCreatorWithShift()
             fi
 
             PrepTerm
-            $FFMPEG $proxy_command $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command \
+            $FFMPEG $proxy_command -user_agent "$user_agent" -headers $"$headers" -cookies "$cookies" $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command \
             -y -vcodec "$VIDEO_CODEC" -acodec "$AUDIO_CODEC" $quality_command $bitrates_command $resolution \
             $FFMPEG_FLAGS -f flv "$flv_push_link" > "$FFMPEG_LOG_ROOT/$pid.log" 2> "$FFMPEG_LOG_ROOT/$pid.err" &
             WaitTerm
@@ -3009,7 +3114,7 @@ FlvStreamCreatorWithShift()
             fi
 
             PrepTerm
-            $FFMPEG $chnl_proxy_command $FFMPEG_INPUT_FLAGS -i "$chnl_stream_link" $map_command \
+            $FFMPEG $chnl_proxy_command -user_agent "$chnl_user_agent" -headers $"$chnl_headers" -cookies "$chnl_cookies" $FFMPEG_INPUT_FLAGS -i "$chnl_stream_link" $map_command \
             -y -vcodec "$chnl_video_codec" -acodec "$chnl_audio_codec" $chnl_quality_command $chnl_bitrates_command $resolution \
             $FFMPEG_FLAGS -f flv "$chnl_flv_push_link" > "$FFMPEG_LOG_ROOT/$new_pid.log" 2> "$FFMPEG_LOG_ROOT/$new_pid.err" &
             WaitTerm
@@ -3165,7 +3270,7 @@ FlvStreamCreatorWithShift()
             fi
 
             PrepTerm
-            $FFMPEG $proxy_command $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command -y \
+            $FFMPEG $proxy_command -user_agent "$user_agent" -headers $"$headers" -cookies "$cookies" $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command -y \
             -vcodec "$VIDEO_CODEC" -acodec "$AUDIO_CODEC" $quality_command $bitrates_command $resolution \
             $FFMPEG_FLAGS -f flv "$flv_push_link" > "$FFMPEG_LOG_ROOT/$pid.log" 2> "$FFMPEG_LOG_ROOT/$pid.err" &
             WaitTerm
@@ -3375,7 +3480,7 @@ HlsStreamCreatorPlus()
                     echo -e "$key_name.key\n$output_dir_root/$key_name.key\n$(openssl rand -hex 16)" > "$output_dir_root/$keyinfo_name.keyinfo"
                 fi
                 PrepTerm
-                $FFMPEG $proxy_command $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command -y \
+                $FFMPEG $proxy_command -user_agent "$user_agent" -headers $"$headers" -cookies "$cookies" $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command -y \
                 -vcodec "$VIDEO_CODEC" -acodec "$AUDIO_CODEC" $quality_command $bitrates_command $resolution \
                 -threads 0 -flags -global_header $FFMPEG_FLAGS -f hls -hls_time "$seg_length" \
                 -hls_list_size $seg_count -hls_delete_threshold $seg_count -hls_key_info_file "$output_dir_root/$keyinfo_name.keyinfo" \
@@ -3383,7 +3488,7 @@ HlsStreamCreatorPlus()
                 WaitTerm
             else
                 PrepTerm
-                $FFMPEG $proxy_command $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command -y \
+                $FFMPEG $proxy_command -user_agent "$user_agent" -headers $"$headers" -cookies "$cookies" $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command -y \
                 -vcodec "$VIDEO_CODEC" -acodec "$AUDIO_CODEC" $quality_command $bitrates_command $resolution \
                 -threads 0 -flags -global_header -f segment -segment_list "$output_dir_root/$playlist_name.m3u8" \
                 -segment_time "$seg_length" -segment_format mpeg_ts $live_command \
@@ -3528,7 +3633,7 @@ HlsStreamCreatorPlus()
                     echo -e "$chnl_key_name.key\n$chnl_output_dir_root/$chnl_key_name.key\n$(openssl rand -hex 16)" > "$chnl_output_dir_root/$chnl_keyinfo_name.keyinfo"
                 fi
                 PrepTerm
-                $FFMPEG $chnl_proxy_command $FFMPEG_INPUT_FLAGS -i "$chnl_stream_link" $map_command -y \
+                $FFMPEG $chnl_proxy_command -user_agent "$chnl_user_agent" -headers $"$chnl_headers" -cookies "$chnl_cookies" $FFMPEG_INPUT_FLAGS -i "$chnl_stream_link" $map_command -y \
                 -vcodec "$chnl_video_codec" -acodec "$chnl_audio_codec" $chnl_quality_command $chnl_bitrates_command $resolution \
                 -threads 0 -flags -global_header $FFMPEG_FLAGS -f hls -hls_time "$chnl_seg_length" \
                 -hls_list_size $chnl_seg_count -hls_delete_threshold $chnl_seg_count -hls_key_info_file "$chnl_output_dir_root/$chnl_keyinfo_name.keyinfo" \
@@ -3536,7 +3641,7 @@ HlsStreamCreatorPlus()
                 WaitTerm
             else
                 PrepTerm
-                $FFMPEG $chnl_proxy_command $FFMPEG_INPUT_FLAGS -i "$chnl_stream_link" $map_command -y \
+                $FFMPEG $chnl_proxy_command -user_agent "$chnl_user_agent" -headers $"$chnl_headers" -cookies "$chnl_cookies" $FFMPEG_INPUT_FLAGS -i "$chnl_stream_link" $map_command -y \
                 -vcodec "$chnl_video_codec" -acodec "$chnl_audio_codec" $chnl_quality_command $chnl_bitrates_command $resolution \
                 -threads 0 -flags -global_header -f segment -segment_list "$chnl_output_dir_root/$chnl_playlist_name.m3u8" \
                 -segment_time "$chnl_seg_length" -segment_format mpeg_ts $chnl_live_command \
@@ -3728,7 +3833,7 @@ HlsStreamCreatorPlus()
                     echo -e "$key_name.key\n$output_dir_root/$key_name.key\n$(openssl rand -hex 16)" > "$output_dir_root/$keyinfo_name.keyinfo"
                 fi
                 PrepTerm
-                $FFMPEG $proxy_command $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command -y \
+                $FFMPEG $proxy_command -user_agent "$user_agent" -headers $"$headers" -cookies "$cookies" $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command -y \
                 -vcodec "$VIDEO_CODEC" -acodec "$AUDIO_CODEC" $quality_command $bitrates_command $resolution \
                 -threads 0 -flags -global_header $FFMPEG_FLAGS -f hls -hls_time "$seg_length" \
                 -hls_list_size $seg_count -hls_delete_threshold $seg_count -hls_key_info_file "$output_dir_root/$keyinfo_name.keyinfo" \
@@ -3736,7 +3841,7 @@ HlsStreamCreatorPlus()
                 WaitTerm
             else
                 PrepTerm
-                $FFMPEG $proxy_command $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command -y \
+                $FFMPEG $proxy_command -user_agent "$user_agent" -headers $"$headers" -cookies "$cookies" $FFMPEG_INPUT_FLAGS -i "$stream_link" $map_command -y \
                 -vcodec "$VIDEO_CODEC" -acodec "$AUDIO_CODEC" $quality_command $bitrates_command $resolution \
                 -threads 0 -flags -global_header -f segment -segment_list "$output_dir_root/$playlist_name.m3u8" \
                 -segment_time "$seg_length" -segment_format mpeg_ts $live_command \
@@ -4030,6 +4135,9 @@ AddChannel()
         proxy_command=""
     fi
 
+    SetUserAgent
+    SetHeaders
+    SetCookies
     SetVideoCodec
     SetAudioCodec
     SetVideoAudioShift
@@ -4197,6 +4305,34 @@ EditLive()
     SetLive
     JQ update "$CHANNELS_FILE" '(.channels[]|select(.pid=='"$chnl_pid"')|.live)="'"$live_yn"'"'
     Println "$info 无限时长直播修改成功 !\n"
+}
+
+EditProxy()
+{
+    SetProxy
+    JQ update "$CHANNELS_FILE" '(.channels[]|select(.pid=='"$chnl_pid"')|.proxy)="'"$proxy"'"'
+    Println "$info 代理修改成功 !\n"
+}
+
+EditUserAgent()
+{
+    SetUserAgent
+    JQ update "$CHANNELS_FILE" '(.channels[]|select(.pid=='"$chnl_pid"')|.user_agent)="'"$user_agent"'"'
+    Println "$info user agent 修改成功 !\n"
+}
+
+EditHeaders()
+{
+    SetHeaders
+    JQ update "$CHANNELS_FILE" '(.channels[]|select(.pid=='"$chnl_pid"')|.headers)="'"$headers"'"'
+    Println "$info headers 修改成功 !\n"
+}
+
+EditCookies()
+{
+    SetCookies
+    JQ update "$CHANNELS_FILE" '(.channels[]|select(.pid=='"$chnl_pid"')|.cookies)="'"$cookies"'"'
+    Println "$info cookies 修改成功 !\n"
 }
 
 EditOutputDirName()
@@ -4424,6 +4560,9 @@ EditChannelAll()
         proxy=""
     fi
 
+    SetUserAgent
+    SetHeaders
+    SetCookies
     SetOutputDirName
     SetPlaylistName
     SetSegDirName
@@ -4516,6 +4655,9 @@ EditChannelAll()
     JQ update "$CHANNELS_FILE" '(.channels[]|select(.pid=='"$chnl_pid"')|.stream_link)="'"$stream_links_input"'"
     |(.channels[]|select(.pid=='"$chnl_pid"')|.live)="'"$live_yn"'"
     |(.channels[]|select(.pid=='"$chnl_pid"')|.proxy)="'"$proxy"'"
+    |(.channels[]|select(.pid=='"$chnl_pid"')|.user_agent)="'"$user_agent"'"
+    |(.channels[]|select(.pid=='"$chnl_pid"')|.headers)="'"$headers"'"
+    |(.channels[]|select(.pid=='"$chnl_pid"')|.cookies)="'"$cookies"'"
     |(.channels[]|select(.pid=='"$chnl_pid"')|.output_dir_name)="'"$output_dir_name"'"
     |(.channels[]|select(.pid=='"$chnl_pid"')|.playlist_name)="'"$playlist_name"'"
     |(.channels[]|select(.pid=='"$chnl_pid"')|.seg_dir_name)="'"$seg_dir_name"'"
@@ -4563,31 +4705,35 @@ EditChannelMenu()
         Println "你要修改什么？
     ${green}1.$plain 修改 直播源
     ${green}2.$plain 修改 无限时长直播
-    ${green}3.$plain 修改 输出目录名称
-    ${green}4.$plain 修改 m3u8名称
-    ${green}5.$plain 修改 段所在子目录名称
-    ${green}6.$plain 修改 段名称
-    ${green}7.$plain 修改 段时长
-    ${green}8.$plain 修改 段数目
-    ${green}9.$plain 修改 视频编码
-    ${green}10.$plain 修改 音频编码
-    ${green}11.$plain 修改 crf质量值
-    ${green}12.$plain 修改 比特率
-    ${green}13.$plain 修改 是否固定码率
-    ${green}14.$plain 修改 是否加密
-    ${green}15.$plain 修改 key名称
-    ${green}16.$plain 修改 输入参数
-    ${green}17.$plain 修改 输出参数
-    ${green}18.$plain 修改 频道名称
-    ${green}19.$plain 修改 是否开启 sync
-    ${green}20.$plain 修改 sync file
-    ${green}21.$plain 修改 sync index
-    ${green}22.$plain 修改 sync pairs
-    ${green}23.$plain 修改 推流地址
-    ${green}24.$plain 修改 拉流地址
-    ${green}25.$plain 修改 全部配置
+    ${green}3.$plain 修改 代理
+    ${green}4.$plain 修改 user agent
+    ${green}5.$plain 修改 headers
+    ${green}6.$plain 修改 cookies
+    ${green}7.$plain 修改 输出目录名称
+    ${green}8.$plain 修改 m3u8名称
+    ${green}9.$plain 修改 段所在子目录名称
+   ${green}10.$plain 修改 段名称
+   ${green}11.$plain 修改 段时长
+   ${green}12.$plain 修改 段数目
+   ${green}13.$plain 修改 视频编码
+   ${green}14.$plain 修改 音频编码
+   ${green}15.$plain 修改 crf质量值
+   ${green}16.$plain 修改 比特率
+   ${green}17.$plain 修改 是否固定码率
+   ${green}18.$plain 修改 是否加密
+   ${green}19.$plain 修改 key名称
+   ${green}20.$plain 修改 输入参数
+   ${green}21.$plain 修改 输出参数
+   ${green}22.$plain 修改 频道名称
+   ${green}23.$plain 修改 是否开启 sync
+   ${green}24.$plain 修改 sync file
+   ${green}25.$plain 修改 sync index
+   ${green}26.$plain 修改 sync pairs
+   ${green}27.$plain 修改 推流地址
+   ${green}28.$plain 修改 拉流地址
+   ${green}29.$plain 修改 全部配置
     ————— 组合[常用] —————
-    ${green}26.$plain 修改 段名称、m3u8名称 (防盗链/DDoS)
+   ${green}30.$plain 修改 段名称、m3u8名称 (防盗链/DDoS)
     \n"
         read -p "(默认: 取消): " edit_channel_num
         [ -z "$edit_channel_num" ] && Println "已取消...\n" && exit 1
@@ -4599,75 +4745,87 @@ EditChannelMenu()
                 EditLive
             ;;
             3)
-                EditOutputDirName
+                EditProxy
             ;;
             4)
-                EditPlaylistName
+                EditUserAgent
             ;;
             5)
-                EditSegDirName
+                EditHeaders
             ;;
             6)
-                EditSegName
+                EditCookies
             ;;
             7)
-                EditSegLength
+                EditOutputDirName
             ;;
             8)
-                EditSegCount
+                EditPlaylistName
             ;;
             9)
-                EditVideoCodec
+                EditSegDirName
             ;;
             10)
-                EditAudioCodec
+                EditSegName
             ;;
             11)
-                EditQuality
+                EditSegLength
             ;;
             12)
-                EditBitrates
+                EditSegCount
             ;;
             13)
-                EditConst
+                EditVideoCodec
             ;;
             14)
-                EditEncrypt
+                EditAudioCodec
             ;;
             15)
-                EditKeyName
+                EditQuality
             ;;
             16)
-                EditInputFlags
+                EditBitrates
             ;;
             17)
-                EditOutputFlags
+                EditConst
             ;;
             18)
-                EditChannelName
+                EditEncrypt
             ;;
             19)
-                EditSync
+                EditKeyName
             ;;
             20)
-                EditSyncFile
+                EditInputFlags
             ;;
             21)
-                EditSyncIndex
+                EditOutputFlags
             ;;
             22)
-                EditSyncPairs
+                EditChannelName
             ;;
             23)
-                EditFlvPushLink
+                EditSync
             ;;
             24)
-                EditFlvPullLink
+                EditSyncFile
             ;;
             25)
-                EditChannelAll
+                EditSyncIndex
             ;;
             26)
+                EditSyncPairs
+            ;;
+            27)
+                EditFlvPushLink
+            ;;
+            28)
+                EditFlvPullLink
+            ;;
+            29)
+                EditChannelAll
+            ;;
+            30)
                 EditForSecurity
             ;;
             *)
@@ -4779,7 +4937,7 @@ TestXtreamCodesLink()
                 then
                     video=1
                 fi
-            done < <($FFPROBE $chnl_proxy_command -i "$chnl_stream_link" -rw_timeout 10000000 -show_streams -loglevel quiet || true)
+            done < <($FFPROBE $chnl_proxy_command -user_agent "$chnl_user_agent" -headers $"$chnl_headers" -cookies "$chnl_cookies" -i "$chnl_stream_link" -rw_timeout 10000000 -show_streams -loglevel quiet || true)
 
             if [ "$audio" -eq 0 ] || [ "$video" -eq 0 ]
             then
@@ -4832,13 +4990,14 @@ ToggleChannel()
 
 StartChannel()
 {
-    if [[ $chnl_stream_link == *"https://www.youtube.com"* ]] || [[ $chnl_stream_link == *"https://youtube.com"* ]] 
+    if [ "${chnl_stream_link:0:23}" == "https://www.youtube.com" ] || [ "${chnl_stream_link:0:19}" == "https://youtube.com" ] 
     then
         if [[ ! -x $(command -v youtube-dl) ]] 
         then
             InstallYoutubeDl
         fi
 
+        Println "$info 解析 youtube 链接..."
         code=${chnl_stream_link#*|}
         chnl_stream_link=${chnl_stream_link%|*}
         chnl_stream_link=$(youtube-dl -f "$code" -g "$chnl_stream_link")
@@ -4887,28 +5046,6 @@ StartChannel()
 
     chnl_quality_command=""
     chnl_bitrates_command=""
-
-    if [ -n "$chnl_live" ]
-    then
-        chnl_seg_count_command="-c $chnl_seg_count"
-    else
-        chnl_seg_count_command=""
-    fi
-
-    if [ "${chnl_stream_link:0:4}" == "http" ] && [ -n "$chnl_proxy" ]
-    then
-        chnl_proxy_command="-http_proxy $chnl_proxy"
-    else
-        chnl_proxy=""
-        chnl_proxy_command=""
-    fi
-
-    if [ -n "$chnl_encrypt" ] 
-    then
-        chnl_key_name_command="-K $chnl_key_name"
-    else
-        chnl_key_name_command=""
-    fi
 
     if [ -z "${kind:-}" ] && [ "$chnl_video_codec" == "copy" ] && [ "$chnl_audio_codec" == "copy" ]
     then
@@ -8415,11 +8552,15 @@ MonitorTryAccounts()
             new_account_line=""
             while [[ $account_line == *" "* ]] 
             do
+                if [[ ${account_line%% *} =~ ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$ ]] 
+                then
+                    account_line=${account_line#* }
+                    continue
+                fi
                 [ -n "$new_account_line" ] && new_account_line=" $new_account_line"
                 new_account_line="${account_line%% *}$new_account_line"
                 account_line=${account_line#* }
             done
-            new_account_line=${new_account_line:-$account_line}
             IFS=" " read -ra accounts <<< "$new_account_line"
             break
         fi
@@ -9512,7 +9653,12 @@ Monitor()
 
                         if [ "${chnls_status[i]}" == "off" ] 
                         then
-                            sleep 5
+                            if [ "${chnls_stream_link[i]:0:23}" == "https://www.youtube.com" ] || [ "${chnls_stream_link[i]:0:19}" == "https://youtube.com" ]
+                            then
+                                sleep 10
+                            else
+                                sleep 5
+                            fi
                             chnl_status=""
                             GetChannelInfo
                             if [ -z "$chnl_status" ] 
@@ -10365,6 +10511,69 @@ RestartNginx()
     fi
 }
 
+AddXtreamCodesAccount()
+{
+    echo && read -p "请输入账号(需包含服务器地址)：" xtream_codes_input
+    [ -z "$xtream_codes_input" ] && Println "已取消...\n" && exit 1
+
+    if [[ $xtream_codes_input == *"username="* ]] 
+    then
+        domain=${xtream_codes_input#*http://}
+        domain=${domain%%/*}
+        username=${xtream_codes_input#*username=}
+        username=${username%%&*}
+        password=${xtream_codes_input#*password=}
+        password=${password%%&*}
+        ip=$(getent ahosts "${domain%%:*}" | awk '{ print $1 ; exit }' || true)
+    elif [[ $xtream_codes_input == *http://*/*/*/* ]] 
+    then
+        xtream_codes_input=${xtream_codes_input#*http://}
+        domain=${xtream_codes_input%%/*}
+        xtream_codes_input=${xtream_codes_input#*/}
+        username=${xtream_codes_input%%/*}
+        if [ "$username" == "live" ] 
+        then
+            xtream_codes_input=${xtream_codes_input#*/}
+            username=${xtream_codes_input%%/*}
+        fi
+        xtream_codes_input=${xtream_codes_input#*/}
+        password=${xtream_codes_input%%/*}
+        ip=$(getent ahosts "${domain%%:*}" | awk '{ print $1 ; exit }' || true)
+    else
+        Println "$error 输入错误 !\n" && exit 1
+    fi
+
+    [ -z "${ip:-}" ] && Println "$error 无法解析域名 !\n" && exit 1
+    printf '%s\n' "$ip $domain $username:$password" >> "$XTREAM_CODES"
+
+    if [ -e "$CHANNELS_FILE" ] 
+    then
+        while IFS= read -r line 
+        do
+            if [[ $line == *\"stream_link\":* ]] && [[ $line == *http://*/*/*/* ]]
+            then
+                line=${line#*: \"http://}
+                chnl_domain=${line%%/*}
+                if [ "$chnl_domain" == "$domain" ] 
+                then
+                    line=${line#*/}
+                    username=${line%%/*}
+                    if [ "$username" == "live" ] 
+                    then
+                        line=${line#*/}
+                        username=${line%%/*}
+                    fi
+                    line=${line#*/}
+                    password=${line%%/*}
+                    printf '%s\n' "$ip $chnl_domain $username:$password" >> "$XTREAM_CODES"
+                fi
+            fi
+        done < "$CHANNELS_FILE"
+    fi
+
+    Println "$info 账号添加成功 !\n"
+}
+
 ListXtreamCodes()
 {
     ips=()
@@ -10514,26 +10723,53 @@ ListXtreamCodes()
         fi
     done < "$XTREAM_CODES"
 
-    ip_count=${#ips[@]}
+    ips_count=${#ips[@]}
 
-    if [ "$ip_count" -gt 0 ] 
+    if [ "$ips_count" -gt 0 ] 
     then
-        printf "" > "$XTREAM_CODES"
+        print_list=""
+        xtream_codes_list=""
+        ips_mac_count=0
+        ips_mac=()
 
-        echo
-
-        for((i=0;i<ip_count;i++));
+        for((i=0;i<ips_count;i++));
         do
-            printf '%s\n' "${ips[i]} ${new_domains[i]} ${new_accounts[i]}" >> "$XTREAM_CODES"
-            echo -e "$green$((i+1)).$plain IP: $green${ips[i]//|/, }$plain 域名: $green${new_domains[i]//|/, }$plain\n\n$green账号:$plain"
+            print_list="$print_list${ips[i]} ${new_domains[i]} ${new_accounts[i]}\n"
             IFS=" " read -ra accounts <<< "${new_accounts[i]}"
             accounts_list=""
             for account in "${accounts[@]}"
             do
-                printf "%s\r\e[20C%s\n" "${account%:*}" "${account#*:}"
+                if [ "${1:-}" == "mac" ] 
+                then
+                    if [[ $account =~ ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$ ]] 
+                    then
+                        accounts_list="$accounts_list${account}\n"
+                    fi
+                elif [[ ! $account =~ ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$ ]] 
+                then
+                    accounts_list="$accounts_list${account%:*}\r\e[20C${account#*:}\n"
+                fi
             done
-            echo
+            if [ -n "$accounts_list" ] 
+            then
+                if [ "${1:-}" == "mac" ] 
+                then
+                    ips_mac+=("$i")
+                    ips_mac_count=$((ips_mac_count+1))
+                    xtream_codes_list="$xtream_codes_list$green$ips_mac_count.$plain IP: $green${ips[i]//|/, }$plain 域名: $green${new_domains[i]//|/, }$plain\n\n$green账号:$plain\n$accounts_list\n\n"
+                else
+                    xtream_codes_list="$xtream_codes_list$green$((i+1)).$plain IP: $green${ips[i]//|/, }$plain 域名: $green${new_domains[i]//|/, }$plain\n\n$green账号:$plain\n$accounts_list\n\n"
+                fi
+            fi
         done
+
+        printf '%b' "$print_list" > "$XTREAM_CODES"
+        if [ "${1:-}" == "mac" ] && [ "$ips_mac_count" -eq 0 ]
+        then
+            Println "$error 请先添加 mac 地址！\n" && exit 1
+        else
+            Println "$xtream_codes_list"
+        fi
     else
         Println "$error 没有账号！\n" && exit 1
     fi
@@ -10550,7 +10786,7 @@ TestXtreamCodes()
             *[!0-9]*) Println "$error 请输入正确的数字\n"
             ;;
             *) 
-                if [ "$test_num" -gt 0 ] && [ ! "$test_num" -gt "$ip_count" ]
+                if [ "$test_num" -gt 0 ] && [ "$test_num" -le "$ips_count" ]
                 then
                     break
                 else
@@ -10721,6 +10957,377 @@ TestXtreamCodes()
         fi
     done
     echo
+}
+
+ViewXtreamCodesChnls()
+{
+    ListXtreamCodes mac
+
+    Println "请输入服务器的序号"
+    while read -p "(默认: 取消): " server_num
+    do
+        case $server_num in
+            "") Println "已取消...\n" && exit 1
+            ;;
+            *[!0-9]*) Println "$error 请输入正确的数字\n"
+            ;;
+            *) 
+                if [ "$server_num" -gt 0 ] && [ "$server_num" -le "$ips_mac_count" ]
+                then
+                    ips_index=${ips_mac[$((server_num-1))]}
+                    break
+                else
+                    Println "$error 请输入正确的序号\n"
+                fi
+            ;;
+        esac
+    done
+
+    domain=${new_domains[ips_index]}
+
+    if [[ $domain == *"|"* ]] 
+    then
+        IFS="|" read -ra domains <<< "$domain"
+        domains_list=""
+        domains_count=${#domains[@]}
+        for((i=0;i<domains_count;i++));
+        do
+            domains_list="$domains_list$green$((i+1)).$plain ${domains[i]}\n\n"
+        done
+        Println "$domains_list"
+
+        Println "请选择域名"
+        while read -p "(默认: 取消): " domains_num
+        do
+            case $domains_num in
+                "") Println "已取消...\n" && exit 1
+                ;;
+                *[!0-9]*) Println "$error 请输入正确的数字\n"
+                ;;
+                *) 
+                    if [ "$domains_num" -gt 0 ] && [ "$domains_num" -le "$domains_count" ]
+                    then
+                        domain=${domains[$((domains_num-1))]}
+                        break
+                    else
+                        Println "$error 请输入正确的序号\n"
+                    fi
+                ;;
+            esac
+        done
+    fi
+
+    account=${new_accounts[ips_index]}
+    IFS=" " read -ra accounts <<< "$account"
+
+    macs=()
+    for account in "${accounts[@]}"
+    do
+        if [[ $account =~ ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$ ]] 
+        then
+            macs+=("$account")
+        fi
+    done
+
+    macs_count=${#macs[@]}
+    if [ "$macs_count" -gt 1 ] 
+    then
+        macs_list=""
+        for((i=0;i<macs_count;i++));
+        do
+            macs_list="$macs_list$green$((i+1)).$plain ${macs[i]}\n\n"
+        done
+        Println "$macs_list"
+
+        Println "请选择 mac"
+        while read -p "(默认: 取消): " macs_num
+        do
+            case $macs_num in
+                "") Println "已取消...\n" && exit 1
+                ;;
+                *[!0-9]*) Println "$error 请输入正确的数字\n"
+                ;;
+                *) 
+                    if [ "$macs_num" -gt 0 ] && [ "$macs_num" -le "$macs_count" ]
+                    then
+                        mac=${macs[$((macs_num-1))]}
+                        break
+                    else
+                        Println "$error 请输入正确的序号\n"
+                    fi
+                ;;
+            esac
+        done
+    else
+        mac=${macs[0]}
+    fi
+
+    server="http://$domain"
+    mac=$(Urlencode "$mac")
+    timezone=$(Urlencode "Europe/Amsterdam")
+    token_url="$server/portal.php?type=stb&action=handshake&JsHttpRequest=1-xml"
+    profile_url="$server/portal.php?type=stb&action=get_profile&JsHttpRequest=1-xml"
+    genres_url="$server/portal.php?type=itv&action=get_genres&JsHttpRequest=1-xml"
+
+    token=$(wget --user-agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)" --tries=3 --no-check-certificate \
+        --header="Cookie: mac=$mac; stb_lang=en; timezone=$timezone" "$token_url" -qO- \
+        | $JQ_FILE -r '.js.token')
+    access_token=$(wget --user-agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)" --tries=3 --no-check-certificate \
+        --header="Authorization: Bearer $token" \
+        --header="Cookie: mac=$mac; stb_lang=en; timezone=$timezone" "$token_url" -qO- \
+        | $JQ_FILE -r '.js.token')
+    profile=$(wget --user-agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)" --tries=3 --no-check-certificate \
+        --header="Authorization: Bearer $access_token" \
+        --header="Cookie: mac=$mac; stb_lang=en; timezone=$timezone" "$profile_url" -qO-)
+
+    if [[ $($JQ_FILE -r '.js.id' <<< "$profile") == null ]] 
+    then
+        Println "$error mac 地址错误!\n" && exit 1
+    fi
+
+    genres_list=""
+    genres_count=0
+    genres_id=()
+    while IFS= read -r line
+    do
+        map_id=${line#*id: }
+        map_id=${map_id%, title:*}
+        map_title=${line#*, title: }
+        map_title=${map_title%\"}
+        genres_count=$((genres_count+1))
+        genres_id+=("$map_id")
+        genres_list="$genres_list$green$genres_count.$plain $map_title\n\n"
+    done < <(wget --user-agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)" --tries=3 --no-check-certificate \
+        --header="Authorization: Bearer $access_token" \
+        --header="Cookie: mac=$mac; stb_lang=en; timezone=$timezone" "$genres_url" -qO- | $JQ_FILE '.js | to_entries | map("id: \(.value.id), title: \(.value.title)") | .[]')
+
+    if [ -n "$genres_list" ] 
+    then
+        genres_list_pages=()
+        FFMPEG_ROOT=$(dirname "$IPTV_ROOT"/ffmpeg-git-*/ffmpeg)
+        FFPROBE="$FFMPEG_ROOT/ffprobe"
+        while true 
+        do
+            Println "$genres_list\n"
+
+            while read -p "输入分类序号(默认: 取消): " genres_num 
+            do
+                case "$genres_num" in
+                    "")
+                        Println "已取消...\n" && exit
+                    ;;
+                    *[!0-9]*)
+                        Println "$error 请输入正确的序号\n"
+                    ;;
+                    *)
+                        if [ "$genres_num" -gt 0 ] && [ "$genres_num" -le "$genres_count" ]
+                        then
+                            genres_index=$((genres_num-1))
+                            break
+                        else
+                            Println "$error 请输入正确的序号\n"
+                        fi
+                    ;;
+                esac
+            done
+
+            if [ -n "${genres_list_pages[genres_index]:-}" ] 
+            then
+                ordered_list_page=${genres_list_pages[genres_index]}
+            else
+                ordered_list_url="$server/portal.php?type=itv&action=get_ordered_list&genre=${genres_id[genres_index]}&force_ch_link_check=&fav=0&sortby=number&hd=0&p=1&JsHttpRequest=1-xml"
+                ordered_list_page=$(wget --user-agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)" --tries=3 --no-check-certificate --header="Authorization: Bearer $access_token" \
+                    --header="Cookie: mac=$mac; stb_lang=en; timezone=$timezone" "$ordered_list_url" -qO-)
+                genres_list_pages[genres_index]="$ordered_list_page"
+            fi
+
+            exec 100< <($JQ_FILE -r '.js.total_items, .js.max_page_items' <<< "$ordered_list_page")
+            read total_items <&100
+            read max_page_items <&100
+            exec 100<&-
+
+            if [ "$total_items" == null ] || [ "${total_items:-0}" -eq 0 ] 
+            then
+                Println "$error 此分类没有频道!\n"
+                continue
+            fi
+
+            if [ "$total_items" -le "$max_page_items" ] 
+            then
+                pages=1
+            else
+                pages=$((total_items / max_page_items))
+                if [ "$total_items" -gt $((pages * max_page_items)) ] 
+                then
+                    pages=$((pages+1))
+                fi
+            fi
+
+            page=1
+            ordered_list_pages=()
+
+            while true 
+            do
+                if [ "${#ordered_list_pages[@]}" -ge "$page" ] 
+                then
+                    page_index=$((page-1))
+                    ordered_list_page=${ordered_list_pages[page_index]}
+                else
+                    if [ "$page" -gt 1 ] 
+                    then
+                        ordered_list_url="$server/portal.php?type=itv&action=get_ordered_list&genre=${genres_id[genres_index]}&force_ch_link_check=&fav=0&sortby=number&hd=0&p=$page&JsHttpRequest=1-xml"
+                        ordered_list_page=$(wget --user-agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)" --tries=3 --no-check-certificate --header="Authorization: Bearer $access_token" \
+                            --header="Cookie: mac=$mac; stb_lang=en; timezone=$timezone" "$ordered_list_url" -qO-)
+                    fi
+                    ordered_list_pages+=("$ordered_list_page")
+                fi
+
+                xc_chnls_id=()
+                xc_chnls_name=()
+                xc_chnls_cmd=()
+                xc_chnls_list=""
+                xc_chnls_count=0
+                while IFS= read -r line
+                do
+                    xc_chnls_count=$((xc_chnls_count+1))
+                    map_id=${line#*id: }
+                    map_id=${map_id%, name:*}
+                    map_name=${line#*, name: }
+                    map_name=${map_name%, cmd:*}
+                    map_cmd=${line#*, cmd: }
+                    map_cmd=${map_cmd%\"}
+                    map_cmd=${map_cmd#* }
+                    xc_chnls_id+=("$map_id")
+                    xc_chnls_name+=("$map_name")
+                    xc_chnls_cmd+=("$map_cmd")
+                    xc_chnls_list="$xc_chnls_list# $green$xc_chnls_count$plain $map_name\n\n"
+                done < <($JQ_FILE '.js.data | to_entries | map("id: \(.value.id), name: \(.value.name), cmd: \(.value.cmd)") | .[]' <<< "$ordered_list_page")
+
+                Println "$xc_chnls_list"
+                echo -e "$tip 输入 a 返回上级页面"
+                if [ "$pages" -gt 1 ] 
+                then
+                    Println "当前第 $page 页, 共 $pages 页"
+                    if [ "$page" -eq 1 ] 
+                    then
+                        echo -e "$tip 输入 x 转到下一页"
+                    elif [ "$page" -eq "$pages" ] 
+                    then
+                        echo -e "$tip 输入 z 转到上一页"
+                    else
+                        echo -e "$tip 输入 z 转到上一页, 输入 x 转到下一页"
+                    fi
+                fi
+
+                echo && while read -p "输入频道序号: " xc_chnls_num 
+                do
+                    case "$xc_chnls_num" in
+                        a)
+                            continue 3
+                        ;;
+                        z)
+                            if [ "$page" -gt 1 ]
+                            then
+                                page=$((page-1))
+                                continue 2
+                            else
+                                Println "$error 没有上一页\n"
+                            fi
+                        ;;
+                        x)
+                            if [ "$page" -lt "$pages" ]
+                            then
+                                page=$((page+1))
+                                continue 2
+                            else
+                                Println "$error 没有下一页\n"
+                            fi
+                        ;;
+                        ""|*[!0-9]*)
+                            Println "$error 请输入正确的序号\n"
+                        ;;
+                        *)
+                            if [ "$xc_chnls_num" -gt 0 ] && [ "$xc_chnls_num" -le "$xc_chnls_count" ]
+                            then
+                                xc_chnls_index=$((xc_chnls_num-1))
+                                break
+                            else
+                                Println "$error 请输入正确的序号\n"
+                            fi
+                        ;;
+                    esac
+                done
+
+                create_link_url="$server/portal.php?type=itv&action=create_link&cmd=${xc_chnls_cmd[xc_chnls_index]}&series=&forced_storage=undefined&disable_ad=0&download=0&JsHttpRequest=1-xml"
+
+                stream_link=$(wget --user-agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)" --tries=3 --no-check-certificate --header="Authorization: Bearer $access_token" \
+                    --header="Cookie: mac=$mac; stb_lang=en; timezone=$timezone" "$create_link_url" -qO- \
+                    | $JQ_FILE -r '.js.cmd')
+                stream_link=${stream_link#* }
+                IFS="/" read -ra s <<< "$stream_link"
+                if [ "${s[3]}" == "live" ] 
+                then
+                    stream_link="${s[0]}//${s[2]}/${s[3]}/${s[4]}/${s[5]}/${s[-1]}"
+                else
+                    stream_link="${s[0]}//${s[2]}/${s[3]}/${s[4]}/${s[-1]}"
+                fi
+                Println "$green${xc_chnls_name[xc_chnls_index]}:$plain $stream_link\n"
+                $FFPROBE -i "$stream_link" -user_agent "Mozilla/5.0 (QtEmbedded; U; Linux; C)" \
+                    -headers "Authorization: Bearer $access_token"$'\r\n' \
+                    -cookies "mac=$mac; stb_lang=en; timezone=$timezone" -hide_banner
+                break
+            done
+            break
+        done
+    else
+        Println "$error 找不到分类!\n" && exit 1
+    fi
+}
+
+AddXtreamCodesMac()
+{
+    echo && read -p "请输入服务器地址：" server
+    [ -z "$server" ] && Println "已取消...\n" && exit 1
+
+    domain=${server#*http://}
+    domain=${domain%%/*}
+    ip=$(getent ahosts "${domain%%:*}" | awk '{ print $1 ; exit }' || true)
+
+    [ -z "${ip:-}" ] && Println "$error 无法解析域名 !\n" && exit 1
+    server="http://$domain"
+
+    echo && read -p "请输入 mac 地址(多个地址空格分隔)：" mac_address
+    [ -z "$mac_address" ] && Println "已取消...\n" && exit 1
+
+    IFS=" " read -ra macs <<< "$mac_address"
+    Println "$info 验证中..."
+
+    for mac_address in "${macs[@]}"
+    do
+        mac=$(Urlencode "$mac_address")
+        timezone=$(Urlencode "Europe/Amsterdam")
+        token_url="$server/portal.php?type=stb&action=handshake&JsHttpRequest=1-xml"
+        profile_url="$server/portal.php?type=stb&action=get_profile&JsHttpRequest=1-xml"
+
+        token=$(wget --user-agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)" --tries=3 --no-check-certificate \
+            --header="Cookie: mac=$mac; stb_lang=en; timezone=$timezone" "$token_url" -qO- \
+            | $JQ_FILE -r '.js.token')
+        access_token=$(wget --user-agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)" --tries=3 --no-check-certificate \
+            --header="Authorization: Bearer $token" \
+            --header="Cookie: mac=$mac; stb_lang=en; timezone=$timezone" "$token_url" -qO- \
+            | $JQ_FILE -r '.js.token')
+        profile=$(wget --user-agent="Mozilla/5.0 (QtEmbedded; U; Linux; C)" --tries=3 --no-check-certificate \
+            --header="Authorization: Bearer $access_token" \
+            --header="Cookie: mac=$mac; stb_lang=en; timezone=$timezone" "$profile_url" -qO-)
+
+        if [[ $($JQ_FILE -r '.js.id' <<< "$profile") == null ]] 
+        then
+            Println "$error $mac_address 地址错误!\n"
+            continue
+        fi
+
+        printf '%s\n' "$ip $domain $mac_address" >> "$XTREAM_CODES"
+    done
 }
 
 GetServerIp()
@@ -12922,7 +13529,9 @@ UpdateSelf()
 
         d_input_flags=${d_input_flags//-timeout 2000000000/-rw_timeout 10000000}
         default=$(
-        $JQ_FILE -n --arg proxy "$d_proxy" --arg playlist_name "$d_playlist_name" --arg seg_dir_name "$d_seg_dir_name" \
+        $JQ_FILE -n --arg proxy "$d_proxy" --arg user_agent "$d_user_agent" \
+            --arg headers "$d_headers" --arg cookies "$d_cookies" \
+            --arg playlist_name "$d_playlist_name" --arg seg_dir_name "$d_seg_dir_name" \
             --arg seg_name "$d_seg_name" --arg seg_length "$d_seg_length" \
             --arg seg_count "$d_seg_count" --arg video_codec "$d_video_codec" \
             --arg audio_codec "$d_audio_codec" --arg video_audio_shift "$d_video_audio_shift" \
@@ -12946,6 +13555,9 @@ UpdateSelf()
             --arg recheck_period "$d_recheck_period" --arg version "$sh_ver" \
             '{
                 proxy: $proxy,
+                user_agent: $user_agent,
+                headers: $headers,
+                cookies: $cookies,
                 playlist_name: $playlist_name,
                 seg_dir_name: $seg_dir_name,
                 seg_name: $seg_name,
@@ -13003,7 +13615,8 @@ UpdateSelf()
             new_channel=$(
             $JQ_FILE -n --arg pid "${chnls_pid[i]}" --arg status "${chnls_status[i]}" \
                 --arg stream_link "${chnls_stream_links[i]}" --arg live "${chnls_live[i]}" \
-                --arg proxy "${chnls_proxy[i]}" \
+                --arg proxy "${chnls_proxy[i]}" --arg user_agent "${chnls_user_agent[i]}" \
+                --arg headers "${chnls_headers[i]}" --arg cookies "${chnls_cookies[i]}" \
                 --arg output_dir_name "${chnls_output_dir_name[i]}" --arg playlist_name "${chnls_playlist_name[i]}" \
                 --arg seg_dir_name "${chnls_seg_dir_name[i]}" --arg seg_name "${chnls_seg_name[i]}" \
                 --arg seg_length "${chnls_seg_length[i]}" --arg seg_count "${chnls_seg_count[i]}" \
@@ -13025,6 +13638,9 @@ UpdateSelf()
                     stream_link: $stream_link,
                     live: $live,
                     proxy: $proxy,
+                    user_agent: $user_agent,
+                    headers: $headers,
+                    cookies: $cookies,
                     output_dir_name: $output_dir_name,
                     playlist_name: $playlist_name,
                     seg_dir_name: $seg_dir_name,
@@ -16388,10 +17004,14 @@ ${green}1.$plain 查看账号
 ${green}2.$plain 添加账号
 ${green}3.$plain 更新账号
 ${green}4.$plain 检测账号
-${green}5.$plain 网络获取账号
-${green}6.$plain 替换频道账号
-\n"
-    read -p "请输入数字 [1-6]：" xtream_codes_num
+${green}5.$plain 获取账号
+————————————
+${green}6.$plain 查看 mac 地址
+${green}7.$plain 添加 mac 地址
+${green}8.$plain 浏览频道
+
+"
+    read -p "请输入数字 [1-8]：" xtream_codes_num
 
     case $xtream_codes_num in
         1) 
@@ -16399,66 +17019,7 @@ ${green}6.$plain 替换频道账号
             ListXtreamCodes
         ;;
         2) 
-            echo && read -p "请输入账号(需包含服务器地址)：" xtream_codes_input
-            [ -z "$xtream_codes_input" ] && Println "已取消...\n" && exit 1
-
-            if [[ $xtream_codes_input == *"username="* ]] 
-            then
-                domain=${xtream_codes_input#*http://}
-                domain=${domain%%/*}
-                username=${xtream_codes_input#*username=}
-                username=${username%%&*}
-                password=${xtream_codes_input#*password=}
-                password=${password%%&*}
-                ip=$(getent ahosts "${domain%%:*}" | awk '{ print $1 ; exit }' || true)
-            elif [[ $xtream_codes_input == *http://*/*/*/* ]] 
-            then
-                xtream_codes_input=${xtream_codes_input#*http://}
-                domain=${xtream_codes_input%%/*}
-                xtream_codes_input=${xtream_codes_input#*/}
-                username=${xtream_codes_input%%/*}
-                if [ "$username" == "live" ] 
-                then
-                    xtream_codes_input=${xtream_codes_input#*/}
-                    username=${xtream_codes_input%%/*}
-                fi
-                xtream_codes_input=${xtream_codes_input#*/}
-                password=${xtream_codes_input%%/*}
-                ip=$(getent ahosts "${domain%%:*}" | awk '{ print $1 ; exit }' || true)
-            else
-                Println "$error 输入错误 !\n" && exit 1
-            fi
-
-            [ -z "${ip:-}" ] && Println "$error 无法解析域名 !\n" && exit 1
-            printf '%s\n' "$ip $domain $username:$password" >> "$XTREAM_CODES"
-
-            if [ -e "$CHANNELS_FILE" ] 
-            then
-                while IFS= read -r line 
-                do
-                    if [[ $line == *\"stream_link\":* ]] && [[ $line == *http://*/*/*/* ]]
-                    then
-                        line=${line#*: \"http://}
-                        chnl_domain=${line%%/*}
-                        if [ "$chnl_domain" == "$domain" ] 
-                        then
-                            line=${line#*/}
-                            username=${line%%/*}
-                            if [ "$username" == "live" ] 
-                            then
-                                line=${line#*/}
-                                username=${line%%/*}
-                            fi
-                            line=${line#*/}
-                            password=${line%%/*}
-                            printf '%s\n' "$ip $chnl_domain $username:$password" >> "$XTREAM_CODES"
-                        fi
-                    fi
-                done < "$CHANNELS_FILE"
-            fi
-
-            Println "$info 账号添加成功 !\n"
-
+            AddXtreamCodesAccount
             ListXtreamCodes
         ;;
         3) 
@@ -16522,9 +17083,17 @@ ${green}6.$plain 替换频道账号
             Println "$info 账号添加成功\n"
         ;;
         6) 
-            Println "$error not ready~\n"
+            ListXtreamCodes mac
         ;;
-        *) Println "$error 请输入正确的数字 [1-6]\n"
+        7) 
+            AddXtreamCodesMac
+            ListXtreamCodes mac
+            Println "$info mac 添加成功!\n"
+        ;;
+        8) 
+            ViewXtreamCodesChnls
+        ;;
+        *) Println "$error 请输入正确的数字 [1-8]\n"
         ;;
     esac
     exit 0
@@ -17069,6 +17638,13 @@ else
             else
                 proxy_command=""
             fi
+            user_agent=$d_user_agent
+            headers=$d_headers
+            if [ -n "$headers" ] && [[ ! $headers == *"\r\n" ]] && [[ $headers == *"\r\n"* ]]
+            then
+                headers="$headers\r\n"
+            fi
+            cookies=$d_cookies
             output_dir_name=${output_dir_name:-$(RandOutputDirName)}
             output_dir_root="$LIVE_ROOT/$output_dir_name"
             playlist_name=${playlist_name:-$(RandPlaylistName)}
